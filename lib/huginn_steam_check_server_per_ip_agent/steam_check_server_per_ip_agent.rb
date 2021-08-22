@@ -23,17 +23,18 @@ module Agents
 
     event_description <<-MD
       Events look like this:
-        {
-          "addr": "XXX.XXX.XXX.XXX:2457",
-          "gmsindex": -1,
-          "appid": 892970,
-          "gamedir": "valheim",
-          "region": -1,
-          "secure": false,
-          "lan": false,
-          "gameport": 2456,
-          "specport": 0
-        }
+
+          {
+            "addr": "XXX.XXX.XXX.XXX:2457",
+            "gmsindex": -1,
+            "appid": 892970,
+            "gamedir": "valheim",
+            "region": -1,
+            "secure": false,
+            "lan": false,
+            "gameport": 2456,
+            "specport": 0
+          }
     MD
 
     def default_options
