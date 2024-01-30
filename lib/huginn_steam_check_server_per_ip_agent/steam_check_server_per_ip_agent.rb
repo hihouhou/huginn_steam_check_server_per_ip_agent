@@ -79,29 +79,38 @@ module Agents
 
     private
 
+    def set_credential(name, value)
+      c = user.user_credentials.find_or_initialize_by(credential_name: name)
+      c.credential_value = value
+      c.save!
+    end
+
+    def log_curl_output(code,body)
+
+      log "request status : #{code}"
+
+      if interpolated['debug'] == 'true'
+        log "request status : #{code}"
+        log "body"
+        log body
+      end
+
+    end
+
     def fetch
       uri = URI.parse("https://api.steampowered.com/ISteamApps/GetServersAtAddress/v0001?addr=#{interpolated['ip']}")
       response = Net::HTTP.get_response(uri)
 
-      log "request  status : #{response.code}"
+      log_curl_output(response.code,response.body)
 
       payload = JSON.parse(response.body)
 
-      if interpolated['debug'] == 'true'
-        log payload
-      end
-
       if interpolated['changes_only'] == 'true'
-        if payload.to_s != memory['last_status']
-          if "#{memory['last_status']}" == ''
-            payload['response']['servers'].each do |servers|
-              create_event payload: servers
-            end
-          else
-            last_status = memory['last_status'].gsub("=>", ": ").gsub(": nil,", ": null,")
-            last_status = JSON.parse(last_status)
-            payload['response']['servers'].each do |servers|
-              found = false
+        if payload != memory['last_status']
+          payload['response']['servers'].each do |servers|
+            found = false
+            if !memory['last_status'].nil? and memory['last_status'].present?
+              last_status = memory['last_status']
               if interpolated['debug'] == 'true'
                 log "servers"
                 log servers
@@ -116,21 +125,23 @@ module Agents
                   log "found is #{found}!"
                 end
               end
-              if found == false
-                if interpolated['debug'] == 'true'
-                  log "found is #{found}! so event created"
-                  log servers
-                end
-                create_event payload: servers
+            end
+            if found == false
+              if interpolated['debug'] == 'true'
+                log "found is #{found}! so event created"
+                log servers
               end
+              create_event payload: servers
             end
           end
-          memory['last_status'] = payload.to_s
+          memory['last_status'] = payload
+        else
+          log "no diff"
         end
       else
         create_event payload: payload['response']['servers']
-        if payload.to_s != memory['last_status']
-          memory['last_status'] = payload.to_s
+        if payload != memory['last_status']
+          memory['last_status'] = payload
         end
       end
     end
